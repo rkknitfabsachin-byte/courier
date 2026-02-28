@@ -26,25 +26,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Fetch Master Data from Google Sheets
     async function fetchMasterData() {
-        if (!SCRIPT_URL.includes("/exec")) return;
+        if (!SCRIPT_URL.includes("/exec")) {
+            console.error("Invalid SCRIPT_URL. Ensure it ends with /exec");
+            return;
+        }
 
         loadingOverlay.style.display = "flex";
         try {
-            // doGet(e) returns the master data
-            const response = await fetch(SCRIPT_URL);
+            console.log("Fetching master data from:", SCRIPT_URL);
+
+            // Note: Google Apps Script 'doGet' returns a 302 redirect to 'googleusercontent.com'
+            // Browsers handle this as a CORS pre-flight. 
+            const response = await fetch(SCRIPT_URL, {
+                method: "GET"
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
+            console.log("Master data received:", data);
 
             if (data.error) {
                 showStatus("Error loading master data: " + data.error, "error");
                 return;
             }
 
-            populateDropdown(handlerSelect, data.handlers);
-            populateDropdown(locationSelect, data.locations);
+            if (data.handlers) populateDropdown(handlerSelect, data.handlers);
+            if (data.locations) populateDropdown(locationSelect, data.locations);
+
+            console.log("Master data loaded successfully");
 
         } catch (error) {
-            console.error("Fetch error:", error);
+            console.error("Master Data Fetch Error Details:", error);
             showStatus("Could not fetch Master Data. Check your Apps Script deployment and permissions.", "error");
+
+            // Suggest fix for "Multiple Accounts" or "CORS" issue in console
+            console.warn("TIP: If you see a CORS error, ensure your Apps Script is deployed as 'Anyone' and you are not logged into multiple Google accounts in this browser session.");
         } finally {
             loadingOverlay.style.display = "none";
         }
@@ -121,7 +140,9 @@ document.addEventListener("DOMContentLoaded", () => {
         setLoading(true);
 
         try {
+            console.log("Submitting data to:", SCRIPT_URL);
             // Use no-cors for the POST request to avoid CORS issues from browser to Apps Script
+            // This is necessary because Apps Script doesn't return CORS headers for POST
             await fetch(SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
@@ -135,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
             base64ImageData = null;
             previewContainer.style.display = 'none';
         } catch (error) {
-            console.error(error);
+            console.error("Submission error:", error);
             showStatus("Submission failed. Check your network or Apps Script setup.", "error");
         } finally {
             setLoading(false);
