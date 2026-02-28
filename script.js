@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const statusMessage = document.getElementById("statusMessage");
     const loadingOverlay = document.getElementById("loadingOverlay");
 
-    const partySelect = document.getElementById("partyName");
     const handlerSelect = document.getElementById("handlerName");
     const locationSelect = document.getElementById("location");
 
@@ -40,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            populateDropdown(partySelect, data.parties);
             populateDropdown(handlerSelect, data.handlers);
             populateDropdown(locationSelect, data.locations);
 
